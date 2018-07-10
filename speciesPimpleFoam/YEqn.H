@@ -2,12 +2,12 @@ fvScalarMatrix YEqn
 (
         fvm::ddt(Y)
       + fvm::div(phi, Y)
-      - fvm::laplacian(turbulence->muEff(), Y)
+      - fvm::laplacian(turbulence->nuEff(), Y)
      ==
         fvOptions(Y)
 );
 
-Info << turbulence->nuEff()->v().dimensions() << endl;
+// Info << turbulence->nuEff()->v().dimensions() << endl;
 
 YEqn.relax();
 
