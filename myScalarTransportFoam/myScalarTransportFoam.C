@@ -39,7 +39,6 @@ int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
     #include "createTime.H"
-//    #include "createTimeControls.H"
     #include "createMesh.H"
 
     simpleControl simple(mesh);
@@ -51,39 +50,35 @@ int main(int argc, char *argv[])
 
     Info<< "\nCalculating scalar transport\n" << endl;
 
-    while (runTime.run())
+    #include "CourantNo.H"
+    
+    while (simple.loop())
     {
-        #include "readTimeControls.H"
-        #include "CourantNo.H"
-        
-        while (simple.loop())
+        Info<< "Time = " << runTime.timeName() << nl << endl;
+
+        while (simple.correctNonOrthogonal())
         {
-            Info<< "Time = " << runTime.timeName() << nl << endl;
+            fvScalarMatrix TEqn
+            (
+                fvm::ddt(T)
+              + fvm::div(phi, T)
+              - fvm::laplacian(DT, T)
+             ==
+                fvOptions(T)
+            );
 
-            while (simple.correctNonOrthogonal())
-            {
-                fvScalarMatrix TEqn
-                (
-                    fvm::ddt(T)
-                  + fvm::div(phi, T)
-                  - fvm::laplacian(DT, T)
-                 ==
-                    fvOptions(T)
-                );
-
-                TEqn.relax();
-                fvOptions.constrain(TEqn);
-                TEqn.solve();
-                fvOptions.correct(T);
-            }
-
-            runTime.write();
-            
-            Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-                << "  ClockTime = " << runTime.elapsedClockTime() << " s"
-                << nl << endl;
+            TEqn.relax();
+            fvOptions.constrain(TEqn);
+            TEqn.solve();
+            fvOptions.correct(T);
         }
-    } 
+
+        runTime.write();
+        
+        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+            << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+            << nl << endl;
+    }
 
     Info<< "End\n" << endl;
 
